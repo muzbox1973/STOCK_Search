@@ -4,6 +4,7 @@ import io
 import requests
 from bs4 import BeautifulSoup
 import re
+import openpyxl
 from naver_scraper_trading import TradingStrategyScraper
 from gemini_analyzer import GeminiAnalyzer
 from fastapi import Header
@@ -225,27 +226,33 @@ def export_stocks(request: ExportRequest):
     Generates and returns an Excel file of stocks including analysis data.
     """
     try:
-        rows = []
+        # Create a new workbook and select the active sheet
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Stock Analysis"
+        
+        # Define headers
+        headers_list = ["종목코드", "종목명", "현재가", "투자의견", "목표주가", "52주 최고", "52주 최저", "업종", "시장"]
+        ws.append(headers_list)
+        
+        # Add data rows
         for s in request.stocks:
             a = request.analysis.get(s.ticker)
-            row = {
-                "종목코드": s.ticker,
-                "종목명": s.name,
-                "현재가": a.current_price if a else "-",
-                "투자의견": f"{a.opinion} ({a.opinion_score})" if a and a.opinion != "N/A" else "-",
-                "목표주가": a.target_price if a else "-",
-                "52주 최고": a.high_52w if a else "-",
-                "52주 최저": a.low_52w if a else "-",
-                "업종": a.sector if a else "-",
-                "시장": s.market
-            }
-            rows.append(row)
-        
-        df = pd.DataFrame(rows)
-        
+            row = [
+                s.ticker,
+                s.name,
+                a.current_price if a else "-",
+                f"{a.opinion} ({a.opinion_score})" if a and a.opinion != "N/A" else "-",
+                a.target_price if a else "-",
+                a.high_52w if a else "-",
+                a.low_52w if a else "-",
+                a.sector if a else "-",
+                s.market
+            ]
+            ws.append(row)
+            
         output = io.BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df.to_excel(writer, index=False, sheet_name='Stock Analysis')
+        wb.save(output)
         
         headers = {
             'Content-Disposition': 'attachment; filename="stock_analysis.xlsx"'
