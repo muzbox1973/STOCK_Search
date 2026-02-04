@@ -34,9 +34,7 @@ function App() {
   const [selectedMarket, setSelectedMarket] = useState<'전체' | 'KOSPI' | 'KOSDAQ'>('전체');
   const [analysis, setAnalysis] = useState<Record<string, AnalysisResult>>({});
 
-  // Gemini API Key State
   const [apiKey, setApiKey] = useState('');
-  const [isKeySaved, setIsKeySaved] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
 
@@ -57,14 +55,12 @@ function App() {
     const savedKey = localStorage.getItem('gemini_api_key');
     if (savedKey) {
       setApiKey(decryptKey(savedKey));
-      setIsKeySaved(true);
     }
   }, []);
 
   const handleSaveKey = () => {
     if (apiKey) {
       localStorage.setItem('gemini_api_key', encryptKey(apiKey));
-      setIsKeySaved(true);
       setShowSettings(false);
     }
   };
