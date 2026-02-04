@@ -1,0 +1,20 @@
+{
+    "name": "stock-search",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "build": "cd frontend && npm install && npm run build"
+    },
+    "dependencies": {
+        "axios": "^1.13.4",
+        "crypto-js": "^4.2.0",
+        "lucide-react": "^0.563.0",
+        "react": "^19.2.0",
+        "react-dom": "^19.2.0"
+    },
+    "devDependencies": {
+        "@vitejs/plugin-react": "^5.1.1",
+        "typescript": "~5.9.3",
+        "vite": "^7.2.4"
+    }
+}
