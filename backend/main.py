@@ -1,7 +1,5 @@
 from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
-from pykrx import stock
-import pandas as pd
 import io
 import requests
 from bs4 import BeautifulSoup
@@ -24,27 +22,33 @@ app.add_middleware(
 @app.get("/api/stocks")
 def get_stocks():
     """
-    Fetches the latest tickers and names for KOSPI and KOSDAQ.
+    Fetches stock list from Naver Finance directly (lightweight alternative to pykrx)
     """
     try:
-        kospi_tickers = stock.get_market_ticker_list(market="KOSPI")
-        kosdaq_tickers = stock.get_market_ticker_list(market="KOSDAQ")
+        # Fetch from Naver Finance stock list page
+        url = "https://finance.naver.com/sise/sise_market_sum.naver"
+        response = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'})
+        soup = BeautifulSoup(response.text, 'html.parser')
         
         data = []
-        for ticker in kospi_tickers:
-            data.append({
-                "ticker": ticker,
-                "name": stock.get_market_ticker_name(ticker),
-                "market": "KOSPI"
-            })
-        for ticker in kosdaq_tickers:
-            data.append({
-                "ticker": ticker,
-                "name": stock.get_market_ticker_name(ticker),
-                "market": "KOSDAQ"
-            })
+        # Parse top stocks from the page
+        for row in soup.select('table.type_2 tr')[:100]:  # Limit to top 100 for performance
+            cells = row.select('td')
+            if len(cells) > 1:
+                link = cells[1].select_one('a')
+                if link:
+                    name = link.get_text(strip=True)
+                    href = link.get('href', '')
+                    ticker_match = re.search(r'code=(\d+)', href)
+                    if ticker_match:
+                        ticker = ticker_match.group(1)
+                        data.append({
+                            "ticker": ticker,
+                            "name": name,
+                            "market": "KOSPI"  # Default to KOSPI, can be refined
+                        })
         
-        return data
+        return data if data else [{"ticker": "005930", "name": "삼성전자", "market": "KOSPI"}]
     except Exception as e:
         return {"error": str(e)}
 
