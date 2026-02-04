@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+requests
+beautifulsoup4
+pykrx
+pandas
+openpyxl
+google-generativeai
+python-multipart

@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+*.xlsx
+stock_analysis_*.xlsx
+
+# Node
+node_modules/
+dist/
+.DS_Store
+
+# Vercel
+.vercel
