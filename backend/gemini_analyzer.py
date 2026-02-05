@@ -1,16 +1,26 @@
-import google.generativeai as genai
+import requests
 import json
 
 class GeminiAnalyzer:
     def __init__(self, api_key: str):
-        genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        self.api_key = api_key
+        self.api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
 
     def test_connection(self):
         """테스트를 위해 간단한 요청을 보냅니다."""
         try:
-            response = self.model.generate_content("Hello")
-            return True if response.text else False
+            headers = {'Content-Type': 'application/json'}
+            data = {
+                "contents": [{
+                    "parts": [{"text": "Hello"}]
+                }]
+            }
+            response = requests.post(self.api_url, headers=headers, json=data, timeout=10)
+            
+            if response.status_code == 200:
+                result = response.json()
+                return True if result.get('candidates') else False
+            return False
         except Exception as e:
             print(f"[ERROR] Gemini API Test failed: {e}")
             return False
@@ -41,16 +51,34 @@ class GeminiAnalyzer:
         """
         
         try:
-            response = self.model.generate_content(prompt)
-            # JSON만 추출하기 위해 간단한 파싱 시도
-            content = response.text.strip()
-            # 마크다운 블록 제거
+            headers = {'Content-Type': 'application/json'}
+            data = {
+                "contents": [{
+                    "parts": [{"text": prompt}]
+                }]
+            }
+            
+            response = requests.post(self.api_url, headers=headers, json=data, timeout=30)
+            
+            if response.status_code != 200:
+                print(f"[ERROR] API Error: {response.text}")
+                raise Exception(f"API Error: {response.status_code}")
+                
+            result = response.json()
+            # 텍스트 추출
+            try:
+                content = result['candidates'][0]['content']['parts'][0]['text'].strip()
+            exceptKeyError:
+                raise Exception("Invalid API response format")
+
+            # JSON 파싱
             if "```json" in content:
                 content = content.split("```json")[1].split("```")[0].strip()
             elif "```" in content:
                 content = content.split("```")[1].split("```")[0].strip()
             
             return json.loads(content)
+            
         except Exception as e:
             print(f"[ERROR] Gemini Analysis failed: {e}")
             return {
